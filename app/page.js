@@ -1,28 +1,28 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback } from 'react';
-import { useSession, signIn } from 'next-auth/react';
-import CardForm from '@/components/CardForm';
-import CardTile from '@/components/CardTile';
-import AuthButton from '@/components/AuthButton';
+import { useEffect, useState, useCallback } from "react";
+import { useSession, signIn } from "next-auth/react";
+import CardForm from "@/components/CardForm";
+import CardTile from "@/components/CardTile";
+import AuthButton from "@/components/AuthButton";
 
 export default function Home() {
   const { data: session, status } = useSession();
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState('');
+  const [loadError, setLoadError] = useState("");
   const [, forceTick] = useState(0);
 
   const loadCards = useCallback(async () => {
     setLoading(true);
-    setLoadError('');
+    setLoadError("");
     try {
-      const res = await fetch('/api/cards');
+      const res = await fetch("/api/cards");
       if (res.status === 401) {
         setCards([]);
         return;
       }
-      if (!res.ok) throw new Error('Could not load cards.');
+      if (!res.ok) throw new Error("Could not load cards.");
       const data = await res.json();
       setCards(data);
     } catch (err) {
@@ -33,9 +33,9 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (status === 'authenticated') {
+    if (status === "authenticated") {
       loadCards();
-    } else if (status === 'unauthenticated') {
+    } else if (status === "unauthenticated") {
       setCards([]);
       setLoading(false);
     }
@@ -51,7 +51,7 @@ export default function Home() {
       now.getDate() + 1,
       0,
       0,
-      5
+      5,
     );
     const timeout = setTimeout(() => {
       forceTick((t) => t + 1);
@@ -60,22 +60,37 @@ export default function Home() {
   }, [cards]);
 
   async function handleAdd(card) {
-    const res = await fetch('/api/cards', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const res = await fetch("/api/cards", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(card),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Could not add card.');
+    if (!res.ok) throw new Error(data.error || "Could not add card.");
     setCards((prev) =>
-      [...prev, data].sort((a, b) => a.dueDate.localeCompare(b.dueDate))
+      [...prev, data].sort((a, b) => a.dueDate.localeCompare(b.dueDate)),
+    );
+  }
+
+  async function handleEdit(id, updates) {
+    const res = await fetch(`/api/cards/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updates),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Could not save changes.");
+    setCards((prev) =>
+      prev
+        .map((card) => (card._id === id ? { ...card, ...updates } : card))
+        .sort((a, b) => a.dueDate.localeCompare(b.dueDate)),
     );
   }
 
   async function handleDelete(id) {
     const prev = cards;
     setCards((c) => c.filter((card) => card._id !== id));
-    const res = await fetch(`/api/cards/${id}`, { method: 'DELETE' });
+    const res = await fetch(`/api/cards/${id}`, { method: "DELETE" });
     if (!res.ok) setCards(prev); // roll back on failure
   }
 
@@ -90,17 +105,18 @@ export default function Home() {
             Days until your promo rate ends
           </h1>
           <p className="mt-2 text-sm text-ink/60">
-            Add each card&rsquo;s promotional end date and watch the countdown update on its own.
+            Add each card&rsquo;s promotional end date and watch the countdown
+            update on its own.
           </p>
         </div>
         <AuthButton />
       </header>
 
-      {status === 'loading' && (
+      {status === "loading" && (
         <p className="text-sm text-ink/50">Checking your session…</p>
       )}
 
-      {status === 'unauthenticated' && (
+      {status === "unauthenticated" && (
         <div className="rounded-lg border border-dashed border-line p-8 text-center">
           <p className="font-display text-lg text-ink/70">
             Sign in to see your cards
@@ -109,7 +125,7 @@ export default function Home() {
             Your cards are private to your Google account.
           </p>
           <button
-            onClick={() => signIn('google')}
+            onClick={() => signIn("google")}
             className="mt-4 rounded-md bg-ink px-4 py-2 text-sm font-medium text-paper transition hover:bg-ink/90"
           >
             Sign in with Google
@@ -117,13 +133,15 @@ export default function Home() {
         </div>
       )}
 
-      {status === 'authenticated' && (
+      {status === "authenticated" && (
         <>
           <div className="mb-8">
             <CardForm onAdd={handleAdd} />
           </div>
 
-          {loading && <p className="text-sm text-ink/50">Loading your cards…</p>}
+          {loading && (
+            <p className="text-sm text-ink/50">Loading your cards…</p>
+          )}
 
           {loadError && <p className="text-sm text-due">{loadError}</p>}
 
@@ -138,7 +156,12 @@ export default function Home() {
 
           <ul className="flex flex-col gap-3">
             {cards.map((card) => (
-              <CardTile key={card._id} card={card} onDelete={handleDelete} />
+              <CardTile
+                key={card._id}
+                card={card}
+                onDelete={handleDelete}
+                onEdit={handleEdit}
+              />
             ))}
           </ul>
         </>
