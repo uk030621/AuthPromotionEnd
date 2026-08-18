@@ -154,6 +154,12 @@ export default function Home() {
             </div>
           )}
 
+          {!loading && !loadError && cards.length > 0 && (
+            <p className="mb-3 text-xs uppercase tracking-wider text-ink/40">
+              Tracking {cards.length} {cards.length === 1 ? "card" : "cards"}
+            </p>
+          )}
+
           <ul className="flex flex-col gap-3">
             {cards.map((card) => (
               <CardTile
