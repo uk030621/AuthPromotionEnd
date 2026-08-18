@@ -1,9 +1,18 @@
-import './globals.css';
-import AuthProvider from '@/components/AuthProvider';
+import "./globals.css";
+import AuthProvider from "@/components/AuthProvider";
 
 export const metadata = {
-  title: 'Pay-By Ledger',
-  description: 'Track credit card payment due dates and days remaining.',
+  title: "Media Library",
+  description: "Developed by LWJ",
+  icons: {
+    icon: "/icons/icon-512x512.png",
+    apple: "/icons/icon-180x180.png",
+  },
+  manifest: "/manifest.json",
+};
+
+export const viewport = {
+  themeColor: "#000000",
 };
 
 export default function RootLayout({ children }) {
