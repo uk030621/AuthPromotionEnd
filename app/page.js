@@ -5,6 +5,7 @@ import { useSession, signIn } from "next-auth/react";
 import CardForm from "@/components/CardForm";
 import CardTile from "@/components/CardTile";
 import AuthButton from "@/components/AuthButton";
+import { formatDate } from "@/lib/dueDate";
 
 export default function Home() {
   const { data: session, status } = useSession();
@@ -156,7 +157,8 @@ export default function Home() {
 
           {!loading && !loadError && cards.length > 0 && (
             <p className="mb-3 text-xs uppercase tracking-wider text-ink/40">
-              Tracking {cards.length} {cards.length === 1 ? "card" : "cards"}
+              Today's date: {formatDate(new Date())} - Tracking {cards.length}{" "}
+              {cards.length === 1 ? "card" : "cards"}
             </p>
           )}
 
