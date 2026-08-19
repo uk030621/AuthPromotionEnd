@@ -5,7 +5,7 @@ import { useSession, signIn } from "next-auth/react";
 import CardForm from "@/components/CardForm";
 import CardTile from "@/components/CardTile";
 import AuthButton from "@/components/AuthButton";
-import { formatDate } from "@/lib/dueDate";
+import { formatDate, formatCurrency } from "@/lib/dueDate";
 
 export default function Home() {
   const { data: session, status } = useSession();
@@ -95,6 +95,11 @@ export default function Home() {
     if (!res.ok) setCards(prev); // roll back on failure
   }
 
+  const totalBorrowed = cards.reduce(
+    (sum, c) => sum + (Number(c.amount) || 0),
+    0,
+  );
+
   return (
     <main className="mx-auto min-h-screen max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
       <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -156,10 +161,15 @@ export default function Home() {
           )}
 
           {!loading && !loadError && cards.length > 0 && (
-            <p className="mb-3 text-xs uppercase tracking-wider text-ink/40">
-              Today's date: {formatDate(new Date())} - Tracking {cards.length}{" "}
-              {cards.length === 1 ? "card" : "cards"}
-            </p>
+            <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2 text-xs uppercase tracking-wider text-ink/40">
+              <span>
+                Tracking {cards.length} {cards.length === 1 ? "card" : "cards"}{" "}
+                · Today {formatDate(new Date())}
+              </span>
+              <span className="font-mono text-sm normal-case tracking-normal text-ink/70">
+                Total borrowed: {formatCurrency(totalBorrowed)}
+              </span>
+            </div>
           )}
 
           <ul className="flex flex-col gap-3">

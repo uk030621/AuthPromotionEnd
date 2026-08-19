@@ -6,6 +6,7 @@ import {
   daysUntil,
   urgencyFor,
   formatDate,
+  formatCurrency,
   parseDateInput,
 } from "@/lib/dueDate";
 
@@ -14,6 +15,7 @@ export default function CardTile({ card, onDelete, onEdit }) {
   const [name, setName] = useState(card.name);
   const [last4, setLast4] = useState(card.last4 || "");
   const [dueDate, setDueDate] = useState(card.dueDate);
+  const [amount, setAmount] = useState(card.amount ?? 0);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -27,6 +29,7 @@ export default function CardTile({ card, onDelete, onEdit }) {
     setName(card.name);
     setLast4(card.last4 || "");
     setDueDate(card.dueDate);
+    setAmount(card.amount ?? 0);
     setError("");
     setIsEditing(true);
   }
@@ -45,6 +48,13 @@ export default function CardTile({ card, onDelete, onEdit }) {
       setError("Last 4 digits must be exactly 4 numbers.");
       return;
     }
+    if (
+      amount !== "" &&
+      (!Number.isFinite(Number(amount)) || Number(amount) < 0)
+    ) {
+      setError("Amount must be a non-negative number.");
+      return;
+    }
 
     setSaving(true);
     try {
@@ -52,6 +62,7 @@ export default function CardTile({ card, onDelete, onEdit }) {
         name: name.trim(),
         last4: last4 || null,
         dueDate,
+        amount: amount === "" ? 0 : Number(amount),
       });
       setIsEditing(false);
     } catch (err) {
@@ -64,7 +75,7 @@ export default function CardTile({ card, onDelete, onEdit }) {
   if (isEditing) {
     return (
       <li className="relative overflow-hidden rounded-lg border border-ink/30 bg-surface p-4 shadow-sm sm:p-5">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-[2fr_1fr_1fr] sm:items-end">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-[2fr_1fr_1fr_1fr] sm:items-end">
           <div>
             <label className="block text-xs uppercase tracking-wider text-ink/50">
               Card name
@@ -86,6 +97,20 @@ export default function CardTile({ card, onDelete, onEdit }) {
               maxLength={4}
               value={last4}
               onChange={(e) => setLast4(e.target.value.replace(/\D/g, ""))}
+              className="mt-1 w-full rounded-md border border-line bg-paper px-3 py-2 text-sm text-ink outline-none focus:border-ink"
+            />
+          </div>
+          <div>
+            <label className="block text-xs uppercase tracking-wider text-ink/50">
+              Amount (£)
+            </label>
+            <input
+              type="number"
+              min={0}
+              step="0.01"
+              inputMode="decimal"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
               className="mt-1 w-full rounded-md border border-line bg-paper px-3 py-2 text-sm text-ink outline-none focus:border-ink"
             />
           </div>
@@ -136,13 +161,25 @@ export default function CardTile({ card, onDelete, onEdit }) {
             •••• {card.last4}
           </p>
         )}
-        <div className="mt-3 border-t border-dashed border-line pt-3">
-          <p className="text-xs uppercase tracking-wider text-ink/40">
-            Promotional rate ends
-          </p>
-          <p className="mt-0.5 font-mono text-sm text-ink/80">
-            {formatDate(targetDate)}
-          </p>
+        <div className="mt-3 flex flex-wrap items-baseline gap-x-4 gap-y-1 border-t border-dashed border-line pt-3">
+          <div>
+            <p className="text-xs uppercase tracking-wider text-ink/40">
+              Promotional rate ends
+            </p>
+            <p className="mt-0.5 font-mono text-sm text-ink/80">
+              {formatDate(targetDate)}
+            </p>
+          </div>
+          {!!card.amount && (
+            <div>
+              <p className="text-xs uppercase tracking-wider text-ink/40">
+                Amount borrowed
+              </p>
+              <p className="mt-0.5 font-mono text-sm text-ink/80">
+                {formatCurrency(card.amount)}
+              </p>
+            </div>
+          )}
         </div>
         <div className="mt-3 flex gap-3">
           <button
