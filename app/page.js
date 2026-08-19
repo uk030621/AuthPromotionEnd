@@ -13,6 +13,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [, forceTick] = useState(0);
+  const [showAddForm, setShowAddForm] = useState("");
 
   const loadCards = useCallback(async () => {
     setLoading(true);
@@ -142,7 +143,27 @@ export default function Home() {
       {status === "authenticated" && (
         <>
           <div className="mb-8">
-            <CardForm onAdd={handleAdd} />
+            <button
+              type="button"
+              onClick={() => setShowAddForm((v) => !v)}
+              aria-expanded={showAddForm}
+              className="flex w-full items-center justify-between rounded-lg border border-brass/40 bg-surface px-4 py-3 text-left shadow-sm transition hover:border-brass sm:px-5"
+            >
+              <span className="font-display text-lg font-medium text-ink">
+                {showAddForm ? "Hide form" : "+ Add a card"}
+              </span>
+              <span
+                className={`font-mono text-xs text-brass transition-transform ${showAddForm ? "rotate-180" : ""}`}
+              >
+                ▾
+              </span>
+            </button>
+
+            {showAddForm && (
+              <div className="mt-3">
+                <CardForm onAdd={handleAdd} />
+              </div>
+            )}
           </div>
 
           {loading && (
