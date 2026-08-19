@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useSession, signIn } from "next-auth/react";
+import Link from "next/link";
 import CardForm from "@/components/CardForm";
 import CardTile from "@/components/CardTile";
 import AuthButton from "@/components/AuthButton";
@@ -13,7 +14,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [, forceTick] = useState(0);
-  const [showAddForm, setShowAddForm] = useState("");
+  const [showAddForm, setShowAddForm] = useState(false);
 
   const loadCards = useCallback(async () => {
     setLoading(true);
@@ -118,6 +119,17 @@ export default function Home() {
         </div>
         <AuthButton />
       </header>
+
+      {status === "authenticated" && (
+        <div className="mb-6">
+          <Link
+            href="/insights"
+            className="text-xs uppercase tracking-wider text-brass hover:underline"
+          >
+            View debt Pareto chart →
+          </Link>
+        </div>
+      )}
 
       {status === "loading" && (
         <p className="text-sm text-ink/50">Checking your session…</p>
