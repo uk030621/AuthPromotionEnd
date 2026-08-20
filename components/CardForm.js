@@ -7,8 +7,13 @@ export default function CardForm({ onAdd }) {
   const [last4, setLast4] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [amount, setAmount] = useState("");
+  const [creditLimit, setCreditLimit] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  function isValidNonNegative(value) {
+    return Number.isFinite(Number(value)) && Number(value) >= 0;
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -26,8 +31,12 @@ export default function CardForm({ onAdd }) {
       setError("Last 4 digits must be exactly 4 numbers.");
       return;
     }
-    if (amount && (!Number.isFinite(Number(amount)) || Number(amount) < 0)) {
+    if (amount && !isValidNonNegative(amount)) {
       setError("Amount must be a non-negative number.");
+      return;
+    }
+    if (creditLimit && !isValidNonNegative(creditLimit)) {
+      setError("Credit limit must be a non-negative number.");
       return;
     }
 
@@ -38,11 +47,13 @@ export default function CardForm({ onAdd }) {
         last4: last4 || null,
         dueDate,
         amount: amount ? Number(amount) : 0,
+        creditLimit: creditLimit ? Number(creditLimit) : null,
       });
       setName("");
       setLast4("");
       setDueDate("");
       setAmount("");
+      setCreditLimit("");
     } catch (err) {
       setError(err.message || "Something went wrong.");
     } finally {
@@ -59,7 +70,7 @@ export default function CardForm({ onAdd }) {
         Add a card
       </p>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[2fr_1fr_1fr_1fr_auto] sm:items-end">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <div>
           <label className="block text-xs uppercase tracking-wider text-ink/50">
             Card name
@@ -90,7 +101,20 @@ export default function CardForm({ onAdd }) {
 
         <div>
           <label className="block text-xs uppercase tracking-wider text-ink/50">
-            Amount (£)
+            Promo ends
+          </label>
+          <input
+            type="date"
+            lang="en-GB"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+            className="mt-1 w-full rounded-md border border-line bg-paper px-3 py-2 text-sm text-ink outline-none focus:border-ink"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs uppercase tracking-wider text-ink/50">
+            Amount borrowed (£)
           </label>
           <input
             type="number"
@@ -106,24 +130,29 @@ export default function CardForm({ onAdd }) {
 
         <div>
           <label className="block text-xs uppercase tracking-wider text-ink/50">
-            Promo ends
+            Credit limit (£, optional)
           </label>
           <input
-            type="date"
-            lang="en-GB"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
+            type="number"
+            min={0}
+            step="0.01"
+            inputMode="decimal"
+            value={creditLimit}
+            onChange={(e) => setCreditLimit(e.target.value)}
+            placeholder="5000.00"
             className="mt-1 w-full rounded-md border border-line bg-paper px-3 py-2 text-sm text-ink outline-none focus:border-ink"
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={submitting}
-          className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-paper transition hover:bg-ink/90 disabled:opacity-50"
-        >
-          {submitting ? "Adding…" : "Add card"}
-        </button>
+        <div className="flex items-end">
+          <button
+            type="submit"
+            disabled={submitting}
+            className="w-full rounded-md bg-ink px-4 py-2 text-sm font-medium text-paper transition hover:bg-ink/90 disabled:opacity-50"
+          >
+            {submitting ? "Adding…" : "Add card"}
+          </button>
+        </div>
       </div>
 
       {error && <p className="mt-3 text-sm text-due">{error}</p>}

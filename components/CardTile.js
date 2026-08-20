@@ -7,8 +7,16 @@ import {
   urgencyFor,
   formatDate,
   formatCurrency,
+  formatPercent,
+  utilizationLevel,
   parseDateInput,
 } from "@/lib/dueDate";
+
+const UTILIZATION_TEXT = {
+  safe: "text-safe",
+  soon: "text-soon",
+  due: "text-due",
+};
 
 export default function CardTile({ card, onDelete, onEdit }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -16,6 +24,7 @@ export default function CardTile({ card, onDelete, onEdit }) {
   const [last4, setLast4] = useState(card.last4 || "");
   const [dueDate, setDueDate] = useState(card.dueDate);
   const [amount, setAmount] = useState(card.amount ?? 0);
+  const [creditLimit, setCreditLimit] = useState(card.creditLimit ?? "");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -25,11 +34,23 @@ export default function CardTile({ card, onDelete, onEdit }) {
     return { targetDate: target, days: d, urgency: urgencyFor(d) };
   }, [card.dueDate]);
 
+  const utilizationPercent =
+    card.creditLimit && card.creditLimit > 0
+      ? (Number(card.amount) / Number(card.creditLimit)) * 100
+      : null;
+  const utilLevel =
+    utilizationPercent !== null ? utilizationLevel(utilizationPercent) : null;
+
+  function isValidNonNegative(value) {
+    return Number.isFinite(Number(value)) && Number(value) >= 0;
+  }
+
   function startEdit() {
     setName(card.name);
     setLast4(card.last4 || "");
     setDueDate(card.dueDate);
     setAmount(card.amount ?? 0);
+    setCreditLimit(card.creditLimit ?? "");
     setError("");
     setIsEditing(true);
   }
@@ -48,11 +69,12 @@ export default function CardTile({ card, onDelete, onEdit }) {
       setError("Last 4 digits must be exactly 4 numbers.");
       return;
     }
-    if (
-      amount !== "" &&
-      (!Number.isFinite(Number(amount)) || Number(amount) < 0)
-    ) {
+    if (amount !== "" && !isValidNonNegative(amount)) {
       setError("Amount must be a non-negative number.");
+      return;
+    }
+    if (creditLimit !== "" && !isValidNonNegative(creditLimit)) {
+      setError("Credit limit must be a non-negative number.");
       return;
     }
 
@@ -63,6 +85,7 @@ export default function CardTile({ card, onDelete, onEdit }) {
         last4: last4 || null,
         dueDate,
         amount: amount === "" ? 0 : Number(amount),
+        creditLimit: creditLimit === "" ? null : Number(creditLimit),
       });
       setIsEditing(false);
     } catch (err) {
@@ -75,7 +98,7 @@ export default function CardTile({ card, onDelete, onEdit }) {
   if (isEditing) {
     return (
       <li className="relative overflow-hidden rounded-lg border border-ink/30 bg-surface p-4 shadow-sm sm:p-5">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-[2fr_1fr_1fr_1fr] sm:items-end">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <label className="block text-xs uppercase tracking-wider text-ink/50">
               Card name
@@ -102,7 +125,19 @@ export default function CardTile({ card, onDelete, onEdit }) {
           </div>
           <div>
             <label className="block text-xs uppercase tracking-wider text-ink/50">
-              Amount (£)
+              Promo ends
+            </label>
+            <input
+              type="date"
+              lang="en-GB"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="mt-1 w-full rounded-md border border-line bg-paper px-3 py-2 text-sm text-ink outline-none focus:border-ink"
+            />
+          </div>
+          <div>
+            <label className="block text-xs uppercase tracking-wider text-ink/50">
+              Amount borrowed (£)
             </label>
             <input
               type="number"
@@ -116,13 +151,15 @@ export default function CardTile({ card, onDelete, onEdit }) {
           </div>
           <div>
             <label className="block text-xs uppercase tracking-wider text-ink/50">
-              Promo ends
+              Credit limit (£, optional)
             </label>
             <input
-              type="date"
-              lang="en-GB"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
+              type="number"
+              min={0}
+              step="0.01"
+              inputMode="decimal"
+              value={creditLimit}
+              onChange={(e) => setCreditLimit(e.target.value)}
               className="mt-1 w-full rounded-md border border-line bg-paper px-3 py-2 text-sm text-ink outline-none focus:border-ink"
             />
           </div>
@@ -177,6 +214,28 @@ export default function CardTile({ card, onDelete, onEdit }) {
               </p>
               <p className="mt-0.5 font-mono text-sm text-ink/80">
                 {formatCurrency(card.amount)}
+              </p>
+            </div>
+          )}
+          {card.creditLimit != null && card.creditLimit > 0 && (
+            <div>
+              <p className="text-xs uppercase tracking-wider text-ink/40">
+                Credit limit
+              </p>
+              <p className="mt-0.5 font-mono text-sm text-ink/80">
+                {formatCurrency(card.creditLimit)}
+              </p>
+            </div>
+          )}
+          {utilizationPercent !== null && (
+            <div>
+              <p className="text-xs uppercase tracking-wider text-ink/40">
+                % used
+              </p>
+              <p
+                className={`mt-0.5 font-mono text-sm font-medium ${UTILIZATION_TEXT[utilLevel]}`}
+              >
+                {formatPercent(utilizationPercent)}
               </p>
             </div>
           )}

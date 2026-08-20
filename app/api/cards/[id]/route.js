@@ -63,6 +63,16 @@ export async function PATCH(request, { params }) {
       }
       update.amount = body.amount !== null ? Number(body.amount) : 0;
     }
+    if (body.creditLimit !== undefined) {
+      if (body.creditLimit !== null && !isValidAmount(body.creditLimit)) {
+        return NextResponse.json(
+          { error: "creditLimit must be a non-negative number" },
+          { status: 400 },
+        );
+      }
+      update.creditLimit =
+        body.creditLimit !== null ? Number(body.creditLimit) : null;
+    }
 
     const db = await getDb();
     // Scope the update to cards owned by the signed-in user so nobody

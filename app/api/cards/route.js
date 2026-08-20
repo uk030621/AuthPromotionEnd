@@ -46,7 +46,7 @@ export async function POST(request) {
 
   try {
     const body = await request.json();
-    const { name, last4, dueDate, amount } = body;
+    const { name, last4, dueDate, amount, creditLimit } = body;
 
     if (!name || !dueDate) {
       return NextResponse.json(
@@ -76,12 +76,27 @@ export async function POST(request) {
       );
     }
 
+    if (
+      creditLimit !== undefined &&
+      creditLimit !== null &&
+      !isValidAmount(creditLimit)
+    ) {
+      return NextResponse.json(
+        { error: "creditLimit must be a non-negative number" },
+        { status: 400 },
+      );
+    }
+
     const db = await getDb();
     const doc = {
       name: String(name).trim(),
       last4: last4 ? String(last4) : null,
       dueDate, // stored as 'YYYY-MM-DD' string; parsed client-side to avoid TZ shifts
       amount: amount !== undefined && amount !== null ? Number(amount) : 0,
+      creditLimit:
+        creditLimit !== undefined && creditLimit !== null
+          ? Number(creditLimit)
+          : null, // optional - null means "not tracked"
       userEmail: session.user.email,
       createdAt: new Date(),
     };

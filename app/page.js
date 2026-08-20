@@ -6,7 +6,12 @@ import Link from "next/link";
 import CardForm from "@/components/CardForm";
 import CardTile from "@/components/CardTile";
 import AuthButton from "@/components/AuthButton";
-import { formatDate, formatCurrency } from "@/lib/dueDate";
+import {
+  formatDate,
+  formatCurrency,
+  formatPercent,
+  utilizationLevel,
+} from "@/lib/dueDate";
 
 export default function Home() {
   const { data: session, status } = useSession();
@@ -101,6 +106,17 @@ export default function Home() {
     (sum, c) => sum + (Number(c.amount) || 0),
     0,
   );
+  const totalCreditLimit = cards.reduce(
+    (sum, c) => sum + (Number(c.creditLimit) || 0),
+    0,
+  );
+  const borrowedOnCardsWithLimit = cards
+    .filter((c) => Number(c.creditLimit) > 0)
+    .reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
+  const overallUsagePercent =
+    totalCreditLimit > 0
+      ? (borrowedOnCardsWithLimit / totalCreditLimit) * 100
+      : null;
 
   return (
     <main className="mx-auto min-h-screen max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
@@ -199,8 +215,24 @@ export default function Home() {
                 Tracking {cards.length} {cards.length === 1 ? "card" : "cards"}{" "}
                 · Today {formatDate(new Date())}
               </span>
-              <span className="font-mono text-sm normal-case tracking-normal text-ink/70">
-                Total borrowed: {formatCurrency(totalBorrowed)}
+              <span className="flex flex-wrap items-baseline gap-x-3 font-mono text-sm normal-case tracking-normal text-ink/70">
+                <span>Borrowed: {formatCurrency(totalBorrowed)}</span>
+                {totalCreditLimit > 0 && (
+                  <span>Limit: {formatCurrency(totalCreditLimit)}</span>
+                )}
+                {overallUsagePercent !== null && (
+                  <span
+                    className={`font-medium ${
+                      utilizationLevel(overallUsagePercent) === "due"
+                        ? "text-due"
+                        : utilizationLevel(overallUsagePercent) === "soon"
+                          ? "text-soon"
+                          : "text-safe"
+                    }`}
+                  >
+                    {formatPercent(overallUsagePercent)} used
+                  </span>
+                )}
               </span>
             </div>
           )}
